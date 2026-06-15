@@ -1,7 +1,7 @@
 """
 ============================================================
 SLV - SmartLivestock Vision
-MAIN APP: dashboard.py (SPOTIFY EDITION - WHATSAPP COMPATIBLE H.264)
+MAIN APP: dashboard.py (SPOTIFY EDITION - BUG FIX DICTIONARY GET)
 ============================================================
 Jalankan dengan:  streamlit run src/dashboard.py
 ============================================================
@@ -63,7 +63,7 @@ st.markdown("""
         border-radius: 8px;
         padding: 24px 32px;
         margin-bottom: 24px;
-        border-left: 5px solid #1DB954; /* Spotify Green */
+        border-left: 5px solid #1DB954; 
     }
     .app-title {
         color: #FFFFFF;
@@ -140,6 +140,8 @@ def init_state():
         "frame_count"   : 0,
         "skip_frame"    : 3,        
         "annotated"     : None,
+        "photo_annotated": None,       
+        "last_uploaded_photo": None,   
         "cached_img_cv" : None,  
         "cached_img_uni": None   
     }
@@ -228,10 +230,14 @@ with st.sidebar:
     input_mode = st.radio("Mode Input", ["Kamera Live", "Upload Video", "Upload Foto"])
 
     uploaded_file = None
+    btn_detect_photo = False
+    
     if input_mode == "Upload Video":
         uploaded_file = st.file_uploader("Upload Video (.mp4, 'avi')", type=["mp4", "avi", "mov"])
     elif input_mode == "Upload Foto":
         uploaded_file = st.file_uploader("Upload Foto (.jpg, 'png')", type=["jpg", "jpeg", "png"])
+        if uploaded_file is not None:
+            btn_detect_photo = st.button("⚡ MULAI DETEKSI FOTO", type="primary", use_container_width=True)
 
     st.divider()
     
@@ -265,6 +271,7 @@ with st.sidebar:
         st.session_state["history"] = []
         st.session_state["detections"] = []
         st.session_state["cv_trend"] = []
+        st.session_state["photo_annotated"] = None
         st.session_state["cached_img_cv"] = None
         st.session_state["cached_img_uni"] = None
         st.rerun()
@@ -340,12 +347,12 @@ def get_baked_chart_image(cv_trend, width_px=300, height_px=110):
     return img_cv, img_uni
 
 # ── FUNGSI PROSES FRAME ───────────────────────────────────
-def process_frame(frame: np.ndarray):
-    fc = st.session_state["frame_count"]
-    st.session_state["frame_count"] = fc + 1
-
-    if fc % st.session_state["skip_frame"] != 0:
-        return st.session_state.get("annotated", frame)
+def process_frame(frame: np.ndarray, ignore_skip=False):
+    if not ignore_skip:
+        fc = st.session_state["frame_count"]
+        st.session_state["frame_count"] = fc + 1
+        if fc % st.session_state["skip_frame"] != 0:
+            return st.session_state.get("annotated", frame)
 
     det = st.session_state["detector"]
     if det is None: return frame
@@ -445,11 +452,28 @@ def update_side_panels():
 
 # ── MODE EKSEKUSI ─────────────────────────────────────────
 if input_mode == "Upload Foto" and uploaded_file:
-    if st.session_state["detector"] is None: st.session_state["detector"] = LivestockDetector()
+    if st.session_state["detector"] is None: 
+        st.session_state["detector"] = LivestockDetector()
+    
+    if st.session_state["last_uploaded_photo"] != uploaded_file.name:
+        st.session_state["photo_annotated"] = None
+        st.session_state["last_uploaded_photo"] = uploaded_file.name
+        st.session_state["detections"] = []
+
     file_bytes = np.frombuffer(uploaded_file.read(), np.uint8)
     frame = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-    annotated = process_frame(frame)
-    with video_placeholder: st.image(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB), width="stretch")
+    
+    if btn_detect_photo:
+        annotated = process_frame(frame, ignore_skip=True)
+        st.session_state["photo_annotated"] = annotated
+    
+    if st.session_state["photo_annotated"] is not None:
+        display_frame = st.session_state["photo_annotated"]
+    else:
+        display_frame = frame
+        
+    with video_placeholder: 
+        st.image(cv2.cvtColor(display_frame, cv2.COLOR_BGR2RGB), width="stretch")
     update_side_panels()
 
 elif input_mode == "Upload Video" and uploaded_file:
@@ -468,13 +492,11 @@ elif input_mode == "Upload Video" and uploaded_file:
     out_dir = tempfile.gettempdir()
     out_video_path = os.path.join(out_dir, f"slv_output_{int(time.time())}.mp4")
     
-    # ── PERBAIKAN SAKTI ANTI-BLOKIR WA: Menggunakan ImageIO libx264 ──
     import imageio
     try:
         out_writer = imageio.get_writer(out_video_path, fps=orig_fps, codec='libx264', quality=7)
         use_imageio = True
     except Exception:
-        # Fallback darurat jika ada kendala library
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out_writer = cv2.VideoWriter(out_video_path, fourcc, orig_fps, (orig_w, orig_h))
         use_imageio = False
@@ -510,9 +532,7 @@ elif input_mode == "Upload Video" and uploaded_file:
             x_offset_uni = orig_w - chart_w - margin
             annotated_frame[y_offset:y_offset+chart_h, x_offset_uni:x_offset_uni+chart_w] = img_uni
             
-        # Tulis frame sesuai dengan mesin pengekspor yang aktif
         if use_imageio:
-            # ImageIO membutuhkan skema warna RGB
             frame_rgb = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
             out_writer.append_data(frame_rgb)
         else:
