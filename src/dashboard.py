@@ -237,7 +237,7 @@ with st.sidebar:
     elif input_mode == "Upload Foto":
         uploaded_file = st.file_uploader("Upload Foto (.jpg, 'png')", type=["jpg", "jpeg", "png"])
         if uploaded_file is not None:
-            btn_detect_photo = st.button("⚡ MULAI DETEKSI FOTO", type="primary", use_container_width=True)
+            btn_detect_photo = st.button("Mulai Deteksi Foto", type="primary", use_container_width=True)
 
     st.divider()
     
