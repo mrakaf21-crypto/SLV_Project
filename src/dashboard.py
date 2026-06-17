@@ -1,7 +1,7 @@
 """
 ============================================================
 SLV - SmartLivestock Vision
-MAIN APP: dashboard.py (COMPREHENSIVE THEME FIXED - ULTRA CLEAN)
+MAIN APP: dashboard.py (SPOTIFY EDITION - CACHE CONTAMINATION FIXED)
 ============================================================
 Jalankan dengan:  streamlit run src/dashboard.py
 ============================================================
@@ -33,158 +33,99 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ── 1. SIDEBAR TOP: SWITCHER TEMA ──────────────────────────
-with st.sidebar:
-    st.markdown("### Tema Aplikasi")
-    app_theme = st.selectbox(
-        "Pilih Mode Tampilan", 
-        ["Dark Mode (Spotify)", "Light Mode (Clean)"], 
-        index=0,
-        label_visibility="collapsed"
-    )
-    st.divider()
-
-# ── 2. DYNAMIC CONFIGURATION WARNA TEMA ────────────────────
-if app_theme == "Dark Mode (Spotify)":
-    bg_app = "#121212"
-    text_app = "#ffffff"
-    bg_sidebar = "#000000 !important"
-    border_sidebar = "1px solid #282828"
-    bg_header = "linear-gradient(90deg, #181818, #282828)"
-    bg_card = "#181818 !important"
-    border_card = "1px solid #282828 !important"
-    text_sub = "#b3b3b3"
-    bg_btn = "#282828 !important"
-    border_btn = "1px solid #404040 !important"
-    text_btn = "#ffffff !important"
-    hover_bg = "#ffffff"
-    hover_text = "#000000"
-    # FIX KONTRAST INPUT DATA
-    bg_input = "#1e1e1e"
-    text_input = "#ffffff"
-else:  # Light Mode (Clean Theme)
-    bg_app = "#f8f9fa"
-    text_app = "#212529"
-    bg_sidebar = "#ffffff !important"
-    border_sidebar = "1px solid #dee2e6"
-    bg_header = "linear-gradient(90deg, #e9ecef, #f8f9fa)"
-    bg_card = "#ffffff !important"
-    border_card = "1px solid #dee2e6 !important"
-    text_sub = "#495057"
-    bg_btn = "#ffffff !important"
-    border_btn = "1px solid #ced4da !important"
-    text_btn = "#212529 !important"
-    hover_bg = "#121212"
-    hover_text = "#ffffff"
-    # FIX KONTRAST INPUT DATA
-    bg_input = "#ffffff"
-    text_input = "#212529"
-
-# ── 3. INJEKSI CUSTOM CSS PENETRASI LAYER DEEP ─────────────
-st.markdown(f"""
+# ── Custom CSS (Spotify Dark Theme & Montserrat Font Fix) ───
+st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght=400;500;600;700;800&display=swap');
 
-    html, body, [class*="css"], .stApp, .stMarkdown, p, div, span, h1, h2, h3, h4, h5, h6, button, label, input, select, textarea {{
+    html, body, [class*="css"], .stMarkdown, p, div, span, h1, h2, h3, h4, h5, h6, button, label, input, select, textarea {
         font-family: 'Montserrat', sans-serif;
-        color: {text_app};
-    }}
-
-    .stApp {{ 
-        background-color: {bg_app}; 
-        color: {text_app};
-    }}
+    }
     
-    section[data-testid="stSidebar"] {{
-        background-color: {bg_sidebar};
-        border-right: {border_sidebar};
-    }}
-    section[data-testid="stSidebar"] .stMarkdown, section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] label {{
-        color: {text_app} !important;
-    }}
+    [data-testid="stSidebarCollapseButton"] span, 
+    .st-emotion-cache-6qob1r, 
+    [data-testid="stExpanderToggleIcon"] svg,
+    [class*="Icon"] {
+        font-family: inherit !important;
+    }
 
-    .app-header {{
-        background: {bg_header};
+    .stApp { 
+        background-color: #121212; 
+        color: #ffffff;
+    }
+    section[data-testid="stSidebar"] {
+        background-color: #000000 !important;
+        border-right: 1px solid #282828;
+    }
+
+    .app-header {
+        background: linear-gradient(90deg, #181818, #282828);
         border-radius: 8px;
         padding: 24px 32px;
         margin-bottom: 24px;
         border-left: 5px solid #1DB954; 
-        border-top: {border_sidebar};
-        border-right: {border_sidebar};
-        border-bottom: {border_sidebar};
-    }}
-    
-    .app-title {{ color: {text_app}; font-size: 1.8rem; font-weight: 800; margin: 0; }}
-    .app-subtitle {{ color: {text_sub}; font-size: 0.9rem; margin-top: 6px; }}
+    }
+    .app-title {
+        color: #FFFFFF;
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+    .app-subtitle {
+        color: #b3b3b3;
+        font-size: 0.9rem;
+        margin-top: 6px;
+    }
 
-    /* ── FIX UTAMA: KOTAK SELECTBOX & DROPDOWN POPUP ── */
-    div[data-baseweb="select"] > div {{
-        background-color: {bg_input} !important;
-        color: {text_input} !important;
-        border: 1px solid {border_sidebar.split()[-1]} !important;
-    }}
-    div[data-baseweb="select"] div, div[data-baseweb="select"] span {{
-        color: {text_input} !important;
-    }}
-    div[role="listbox"], ul[role="listbox"], div[data-baseweb="popover"] {{
-        background-color: {bg_input} !important;
-        color: {text_input} !important;
-    }}
-    div[role="option"], li[role="option"] {{
-        background-color: {bg_input} !important;
-        color: {text_input} !important;
-    }}
-    div[role="option"]:hover, li[role="option"]:hover {{
-        background-color: #1DB954 !important;
+    .stButton > button {
+        background-color: #282828 !important;
         color: #ffffff !important;
-    }}
-
-    /* ── FIX KOTAK ISIAN ANGKA / KALIBRASI FORM ── */
-    div[data-baseweb="input"] > div, input {{
-        background-color: {bg_input} !important;
-        color: {text_input} !important;
-        border-color: {border_sidebar.split()[-1]} !important;
-    }}
-
-    /* ── FIX KOTAK FILE UPLOADER DROPZONE ── */
-    div[data-testid="stFileUploader"] section {{
-        background-color: {bg_input} !important;
-        border: 1px dashed {border_sidebar.split()[-1]} !important;
-    }}
-
-    .stButton > button {{
-        background-color: {bg_btn};
-        color: {text_btn};
-        border: {border_btn};
+        border: 1px solid #404040 !important;
         border-radius: 20px !important; 
         padding: 6px 24px !important;
         font-weight: 600 !important;
+        font-size: 0.85rem !important;
         transition: all 0.2s ease-in-out !important;
-    }}
-    .stButton > button:hover {{
-        background-color: {hover_bg} !important;
-        color: {hover_text} !important;
-        border-color: {hover_bg} !important;
+    }
+    .stButton > button:hover {
+        background-color: #ffffffff !important;
+        color: #000000 !important;
+        border-color: #ffffffff !important;
         scale: 1.03;
-    }}
+    }
     
-    div.stButton > button[kind="primary"] {{
+    div.stButton > button[kind="primary"] {
         background-color: #1DB954 !important;
         color: #ffffff !important;
         border: none !important;
-    }}
-    div.stButton > button[kind="primary"]:hover {{
+    }
+    div.stButton > button[kind="primary"]:hover {
         background-color: #1ed760 !important;
         color: #ffffff !important;
         scale: 1.03;
         box-shadow: 0 0 12px #1DB954;
-    }}
+    }
 
-    hr {{ border-color: {border_sidebar.split()[-1]} !important; }}
-    div[data-testid="stDataFrame"] {{ background-color: {bg_card}; border: {border_card}; border-radius: 8px !important; }}
-    .stExpander {{ background-color: {bg_card}; border: {border_card}; border-radius: 8px !important; }}
-    div[data-testid="stMetricValue"] div {{ color: {text_app} !important; }}
-    div[data-testid="stMetricLabel"] div {{ color: {text_sub} !important; }}
+    .stSelectbox div[data-baseweb="select"], .stSlider div[data-testid="stSliderRoot"] {
+        background-color: #121212 !important;
+    }
+    
+    hr {
+        border-color: #282828 !important;
+    }
+
+    div[data-testid="stDataFrame"] {
+        background-color: #181818 !important;
+        border: 1px solid #282828 !important;
+        border-radius: 8px !important;
+    }
+
+    .stExpander {
+        background-color: #181818 !important;
+        border: 1px solid #282828 !important;
+        border-radius: 8px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -229,7 +170,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
-# SIDEBAR CONTROLS
+# SIDEBAR
 # ══════════════════════════════════════════════════════════
 with st.sidebar:
     st.markdown("### Kontrol Sistem")
@@ -368,7 +309,7 @@ with col_chart:
     chart_placeholder = st.empty()
 
 # ── FUNGSI BACKEND GRAFIK VIDEO ───────────────────────────
-def get_baked_chart_image(cv_trend, selected_theme, width_px=300, height_px=110):
+def get_baked_chart_image(cv_trend, width_px=300, height_px=110):
     if not cv_trend or len(cv_trend) < 2:
         return None, None
         
@@ -376,13 +317,10 @@ def get_baked_chart_image(cv_trend, selected_theme, width_px=300, height_px=110)
     dpi = 100
     figsize_inch = (width_px / dpi, height_px / dpi)
     
-    mat_bg = '#181818' if selected_theme == "Dark Mode (Spotify)" else '#ffffff'
-    mat_txt = '#FFFFFF' if selected_theme == "Dark Mode (Spotify)" else '#212529'
-    
-    fig_cv, ax_cv = plt.subplots(figsize=figsize_inch, dpi=dpi, facecolor=mat_bg)
-    ax_cv.set_facecolor(mat_bg)
+    fig_cv, ax_cv = plt.subplots(figsize=figsize_inch, dpi=dpi, facecolor='#181818')
+    ax_cv.set_facecolor('#181818')
     ax_cv.plot(df["CV"], color='#ffbb33', linewidth=2.5)
-    ax_cv.set_title("TREN CV (%)", color=mat_txt, fontsize=7, loc='left', fontweight='bold', pad=4)
+    ax_cv.set_title("TREN CV (%)", color='#FFFFFF', fontsize=7, loc='left', fontweight='bold', pad=4)
     ax_cv.axis('off')
     latest_cv = df["CV"].iloc[-1]
     fig_cv.text(0.65, 0.15, f"CV: {latest_cv}%", color='#ffbb33', fontsize=7, fontweight='bold')
@@ -394,10 +332,10 @@ def get_baked_chart_image(cv_trend, selected_theme, width_px=300, height_px=110)
     img_cv = cv2.resize(img_cv, (width_px, height_px))
     plt.close(fig_cv)
     
-    fig_uni, ax_uni = plt.subplots(figsize=figsize_inch, dpi=dpi, facecolor=mat_bg)
-    ax_uni.set_facecolor(mat_bg)
+    fig_uni, ax_uni = plt.subplots(figsize=figsize_inch, dpi=dpi, facecolor='#181818')
+    ax_uni.set_facecolor('#181818')
     ax_uni.plot(df["Uniformity"], color='#1DB954', linewidth=2.5)
-    ax_uni.set_title("INDEKS KESERAGAMAN (%)", color=mat_txt, fontsize=7, loc='left', fontweight='bold', pad=4)
+    ax_uni.set_title("INDEKS KESERAGAMAN (%)", color='#FFFFFF', fontsize=7, loc='left', fontweight='bold', pad=4)
     ax_uni.axis('off')
     latest_uni = df["Uniformity"].iloc[-1]
     fig_uni.text(0.62, 0.15, f"Uni: {latest_uni}%", color='#1DB954', fontsize=7, fontweight='bold')
@@ -417,6 +355,7 @@ def process_frame(frame: np.ndarray, ignore_skip=False):
         fc = st.session_state["frame_count"]
         st.session_state["frame_count"] = fc + 1
         if fc % st.session_state["skip_frame"] != 0:
+            # FIXED LOGIKA: Pastikan jika ada sisa cache dimensi berbeda, abaikan dan pakai frame asli saat ini
             if st.session_state.get("annotated") is not None and st.session_state["annotated"].shape == frame.shape:
                 return st.session_state["annotated"]
             return frame
@@ -550,6 +489,7 @@ elif input_mode == "Upload Video" and uploaded_file:
     if not btn_detect_video:
         st.info("💡 Video sukses terunggah! Silakan klik tombol **⚡ MULAI DETEKSI VIDEO** di atas.")
     else:
+        # FIXED AUTOMATIC RESET: Sapu bersih seluruh sisa sampah/dimensi foto lama sebelum video loop dimulai
         st.session_state["frame_count"] = 0
         st.session_state["annotated"] = None
         st.session_state["cached_img_cv"] = None
@@ -595,7 +535,7 @@ elif input_mode == "Upload Video" and uploaded_file:
                 update_side_panels()
                 
                 if current_fc % st.session_state["skip_frame"] == 0 or st.session_state["cached_img_cv"] is None:
-                    img_cv, img_uni = get_baked_chart_image(st.session_state["cv_trend"], app_theme, width_px=chart_w, height_px=chart_h)
+                    img_cv, img_uni = get_baked_chart_image(st.session_state["cv_trend"], width_px=chart_w, height_px=chart_h)
                     st.session_state["cached_img_cv"] = img_cv
                     st.session_state["cached_img_uni"] = img_uni
                 
