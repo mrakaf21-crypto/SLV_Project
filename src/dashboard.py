@@ -1,7 +1,7 @@
 """
 ============================================================
 SLV - SmartLivestock Vision
-MAIN APP: dashboard.py (SPOTIFY EDITION - MOBILE VIDEO & CODEC OPTIMIZED)
+MAIN APP: dashboard.py (SPOTIFY EDITION - CACHE CONTAMINATION FIXED)
 ============================================================
 Jalankan dengan:  streamlit run src/dashboard.py
 ============================================================
@@ -268,19 +268,19 @@ with st.sidebar:
 # ── LAYOUT UTAMA ──────────────────────────────────────────
 uploaded_file = None
 btn_detect_photo = False
-btn_detect_video = False  # Pemicu mandiri anti-freeze mobile
+btn_detect_video = False
 
 if input_mode == "Upload Foto":
-    st.markdown("#### 📁 Unggah Foto Sapi")
+    st.markdown("#### 📁 Unggah Foto Maket Sapi")
     uploaded_file = st.file_uploader("Pilih file gambar (.jpg, .png)", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
     if uploaded_file is not None:
-        btn_detect_photo = st.button("Mulai Deteksi Foto", type="primary", use_container_width=True)
+        btn_detect_photo = st.button("⚡ MULAI DETEKSI FOTO", type="primary", use_container_width=True)
 
 elif input_mode == "Upload Video":
     st.markdown("#### 📁 Unggah Rekaman Video Kandang")
     uploaded_file = st.file_uploader("Pilih file video (.mp4, .avi, .mov)", type=["mp4", "avi", "mov"], label_visibility="collapsed")
     if uploaded_file is not None:
-        btn_detect_video = st.button("Mulai Deteksi Video", type="primary", use_container_width=True)
+        btn_detect_video = st.button("⚡ MULAI DETEKSI VIDEO", type="primary", use_container_width=True)
 
 st.markdown("#### Live Feed Kamera AI")
 video_placeholder = st.empty()
@@ -355,7 +355,10 @@ def process_frame(frame: np.ndarray, ignore_skip=False):
         fc = st.session_state["frame_count"]
         st.session_state["frame_count"] = fc + 1
         if fc % st.session_state["skip_frame"] != 0:
-            return st.session_state.get("annotated", frame)
+            # FIXED LOGIKA: Pastikan jika ada sisa cache dimensi berbeda, abaikan dan pakai frame asli saat ini
+            if st.session_state.get("annotated") is not None and st.session_state["annotated"].shape == frame.shape:
+                return st.session_state["annotated"]
+            return frame
 
     det = st.session_state["detector"]
     if det is None: return frame
@@ -483,19 +486,24 @@ elif input_mode == "Upload Video" and uploaded_file:
     if st.session_state["detector"] is None: 
         st.session_state["detector"] = LivestockDetector()
     
-    # Menampilkan panduan sebelum tombol eksekusi ditekan
     if not btn_detect_video:
-        st.info("💡 Video sukses terunggah! Silakan klik tombol **⚡ MULAI DETEKSI VIDEO** di atas untuk menjalankan tracking AI.")
+        st.info("💡 Video sukses terunggah! Silakan klik tombol **⚡ MULAI DETEKSI VIDEO** di atas.")
     else:
+        # FIXED AUTOMATIC RESET: Sapu bersih seluruh sisa sampah/dimensi foto lama sebelum video loop dimulai
+        st.session_state["frame_count"] = 0
+        st.session_state["annotated"] = None
+        st.session_state["cached_img_cv"] = None
+        st.session_state["cached_img_uni"] = None
+        st.session_state["detections"] = []
+
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tfile:
             tfile.write(uploaded_file.read())
             tfile_path = tfile.name
 
         cap = cv2.VideoCapture(tfile_path)
         
-        # FIX PROTEKSI KODEKS: Pengecekan apakah video HP (H.265) bisa dibaca server cloud Linux
         if not cap.isOpened():
-            st.error("⚠️ **Gagal Membaca Video HP (Masalah Kodeks)!** Video hasil rekaman langsung kamera HP lo otomatis menggunakan kompresi tingkat tinggi (**H.265/HEVC**). Server cloud Streamlit Linux gratisan tidak memiliki codec untuk membaca format ini. \n\n**Solusi Mudah Sidang:** \n1. Gunakan file video sampel standar **MP4 (H.264)** yang biasa lo putar lancar di laptop. \n2. Atau konversi dulu video HP lo lewat website converter online ke MP4 standar biasa sebelum di-upload.")
+            st.error("⚠️ **Gagal Membaca Video HP (Masalah Kodeks)!** Pastikan file video lo beralih ke format H.264 standar.")
         else:
             orig_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             orig_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
