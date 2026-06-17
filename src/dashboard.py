@@ -1,7 +1,7 @@
 """
 ============================================================
 SLV - SmartLivestock Vision
-MAIN APP: dashboard.py (DYNAMIC THEME SWITCHER - PREMIUM EDITION)
+MAIN APP: dashboard.py (COMPREHENSIVE THEME FIXED - ULTRA CLEAN)
 ============================================================
 Jalankan dengan:  streamlit run src/dashboard.py
 ============================================================
@@ -33,7 +33,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ── 1. SIDEBAR TOP: SWITCHER TEMA (DIEKSEKUSI DI AWAL) ─────
+# ── 1. SIDEBAR TOP: SWITCHER TEMA ──────────────────────────
 with st.sidebar:
     st.markdown("### Tema Aplikasi")
     app_theme = st.selectbox(
@@ -59,10 +59,13 @@ if app_theme == "Dark Mode (Spotify)":
     text_btn = "#ffffff !important"
     hover_bg = "#ffffff"
     hover_text = "#000000"
+    # FIX KONTRAST INPUT DATA
+    bg_input = "#1e1e1e"
+    text_input = "#ffffff"
 else:  # Light Mode (Clean Theme)
     bg_app = "#f8f9fa"
     text_app = "#212529"
-    bg_sidebar = "#f1f3f5 !important"
+    bg_sidebar = "#ffffff !important"
     border_sidebar = "1px solid #dee2e6"
     bg_header = "linear-gradient(90deg, #e9ecef, #f8f9fa)"
     bg_card = "#ffffff !important"
@@ -73,28 +76,25 @@ else:  # Light Mode (Clean Theme)
     text_btn = "#212529 !important"
     hover_bg = "#121212"
     hover_text = "#ffffff"
+    # FIX KONTRAST INPUT DATA
+    bg_input = "#ffffff"
+    text_input = "#212529"
 
-# ── 3. INJEKSI CUSTOM CSS DINAMIS ──────────────────────────
+# ── 3. INJEKSI CUSTOM CSS PENETRASI LAYER DEEP ─────────────
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght=400;500;600;700;800&display=swap');
 
-    html, body, [class*="css"], .stMarkdown, p, div, span, h1, h2, h3, h4, h5, h6, button, label, input, select, textarea {{
+    html, body, [class*="css"], .stApp, .stMarkdown, p, div, span, h1, h2, h3, h4, h5, h6, button, label, input, select, textarea {{
         font-family: 'Montserrat', sans-serif;
         color: {text_app};
-    }}
-    
-    [data-testid="stSidebarCollapseButton"] span, 
-    .st-emotion-cache-6qob1r, 
-    [data-testid="stExpanderToggleIcon"] svg,
-    [class*="Icon"] {{
-        font-family: inherit !important;
     }}
 
     .stApp {{ 
         background-color: {bg_app}; 
         color: {text_app};
     }}
+    
     section[data-testid="stSidebar"] {{
         background-color: {bg_sidebar};
         border-right: {border_sidebar};
@@ -109,21 +109,47 @@ st.markdown(f"""
         padding: 24px 32px;
         margin-bottom: 24px;
         border-left: 5px solid #1DB954; 
-        border-top: 1px solid {border_sidebar.split()[-1]};
-        border-right: 1px solid {border_sidebar.split()[-1]};
-        border-bottom: 1px solid {border_sidebar.split()[-1]};
+        border-top: {border_sidebar};
+        border-right: {border_sidebar};
+        border-bottom: {border_sidebar};
     }}
-    .app-title {{
-        color: {text_app};
-        font-size: 1.8rem;
-        font-weight: 800;
-        margin: 0;
-        letter-spacing: -0.5px;
+    
+    .app-title {{ color: {text_app}; font-size: 1.8rem; font-weight: 800; margin: 0; }}
+    .app-subtitle {{ color: {text_sub}; font-size: 0.9rem; margin-top: 6px; }}
+
+    /* ── FIX UTAMA: KOTAK SELECTBOX & DROPDOWN POPUP ── */
+    div[data-baseweb="select"] > div {{
+        background-color: {bg_input} !important;
+        color: {text_input} !important;
+        border: 1px solid {border_sidebar.split()[-1]} !important;
     }}
-    .app-subtitle {{
-        color: {text_sub};
-        font-size: 0.9rem;
-        margin-top: 6px;
+    div[data-baseweb="select"] div, div[data-baseweb="select"] span {{
+        color: {text_input} !important;
+    }}
+    div[role="listbox"], ul[role="listbox"], div[data-baseweb="popover"] {{
+        background-color: {bg_input} !important;
+        color: {text_input} !important;
+    }}
+    div[role="option"], li[role="option"] {{
+        background-color: {bg_input} !important;
+        color: {text_input} !important;
+    }}
+    div[role="option"]:hover, li[role="option"]:hover {{
+        background-color: #1DB954 !important;
+        color: #ffffff !important;
+    }}
+
+    /* ── FIX KOTAK ISIAN ANGKA / KALIBRASI FORM ── */
+    div[data-baseweb="input"] > div, input {{
+        background-color: {bg_input} !important;
+        color: {text_input} !important;
+        border-color: {border_sidebar.split()[-1]} !important;
+    }}
+
+    /* ── FIX KOTAK FILE UPLOADER DROPZONE ── */
+    div[data-testid="stFileUploader"] section {{
+        background-color: {bg_input} !important;
+        border: 1px dashed {border_sidebar.split()[-1]} !important;
     }}
 
     .stButton > button {{
@@ -133,7 +159,6 @@ st.markdown(f"""
         border-radius: 20px !important; 
         padding: 6px 24px !important;
         font-weight: 600 !important;
-        font-size: 0.85rem !important;
         transition: all 0.2s ease-in-out !important;
     }}
     .stButton > button:hover {{
@@ -155,33 +180,11 @@ st.markdown(f"""
         box-shadow: 0 0 12px #1DB954;
     }}
 
-    .stSelectbox div[data-baseweb="select"], .stSlider div[data-testid="stSliderRoot"] {{
-        background-color: {bg_app} !important;
-    }}
-    
-    hr {{
-        border-color: {border_sidebar.split()[-1]} !important;
-    }}
-
-    div[data-testid="stDataFrame"] {{
-        background-color: {bg_card};
-        border: {border_card};
-        border-radius: 8px !important;
-    }}
-
-    .stExpander {{
-        background-color: {bg_card};
-        border: {border_card};
-        border-radius: 8px !important;
-    }}
-
-    /* Perbaikan visibilitas teks komponen metrik */
-    div[data-testid="stMetricValue"] {{
-        color: {text_app} !important;
-    }}
-    div[data-testid="stMetricLabel"] {{
-        color: {text_sub} !important;
-    }}
+    hr {{ border-color: {border_sidebar.split()[-1]} !important; }}
+    div[data-testid="stDataFrame"] {{ background-color: {bg_card}; border: {border_card}; border-radius: 8px !important; }}
+    .stExpander {{ background-color: {bg_card}; border: {border_card}; border-radius: 8px !important; }}
+    div[data-testid="stMetricValue"] div {{ color: {text_app} !important; }}
+    div[data-testid="stMetricLabel"] div {{ color: {text_sub} !important; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -327,16 +330,16 @@ btn_detect_photo = False
 btn_detect_video = False
 
 if input_mode == "Upload Foto":
-    st.markdown("#### 📁 Unggah Foto Sapi")
+    st.markdown("#### 📁 Unggah Foto Maket Sapi")
     uploaded_file = st.file_uploader("Pilih file gambar (.jpg, .png)", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
     if uploaded_file is not None:
-        btn_detect_photo = st.button("Mulai Deteksi Foto", type="primary", use_container_width=True)
+        btn_detect_photo = st.button("⚡ MULAI DETEKSI FOTO", type="primary", use_container_width=True)
 
 elif input_mode == "Upload Video":
-    st.markdown("#### 📁 Unggah Rekaman Video Sapi")
+    st.markdown("#### 📁 Unggah Rekaman Video Kandang")
     uploaded_file = st.file_uploader("Pilih file video (.mp4, .avi, .mov)", type=["mp4", "avi", "mov"], label_visibility="collapsed")
     if uploaded_file is not None:
-        btn_detect_video = st.button("Mulai Deteksi Video", type="primary", use_container_width=True)
+        btn_detect_video = st.button("⚡ MULAI DETEKSI VIDEO", type="primary", use_container_width=True)
 
 st.markdown("#### Live Feed Kamera AI")
 video_placeholder = st.empty()
@@ -365,7 +368,6 @@ with col_chart:
     chart_placeholder = st.empty()
 
 # ── FUNGSI BACKEND GRAFIK VIDEO ───────────────────────────
-# ADAPTIF: Grafik video mengikuti warna tema pilihan aktif
 def get_baked_chart_image(cv_trend, selected_theme, width_px=300, height_px=110):
     if not cv_trend or len(cv_trend) < 2:
         return None, None
@@ -374,11 +376,9 @@ def get_baked_chart_image(cv_trend, selected_theme, width_px=300, height_px=110)
     dpi = 100
     figsize_inch = (width_px / dpi, height_px / dpi)
     
-    # Deteksi warna dasar grafik berdasarkan pilihan tema
     mat_bg = '#181818' if selected_theme == "Dark Mode (Spotify)" else '#ffffff'
     mat_txt = '#FFFFFF' if selected_theme == "Dark Mode (Spotify)" else '#212529'
     
-    # 1. Render Grafik Tren CV (%)
     fig_cv, ax_cv = plt.subplots(figsize=figsize_inch, dpi=dpi, facecolor=mat_bg)
     ax_cv.set_facecolor(mat_bg)
     ax_cv.plot(df["CV"], color='#ffbb33', linewidth=2.5)
@@ -394,7 +394,6 @@ def get_baked_chart_image(cv_trend, selected_theme, width_px=300, height_px=110)
     img_cv = cv2.resize(img_cv, (width_px, height_px))
     plt.close(fig_cv)
     
-    # 2. Render Grafik Indeks Keseragaman (%)
     fig_uni, ax_uni = plt.subplots(figsize=figsize_inch, dpi=dpi, facecolor=mat_bg)
     ax_uni.set_facecolor(mat_bg)
     ax_uni.plot(df["Uniformity"], color='#1DB954', linewidth=2.5)
@@ -596,7 +595,6 @@ elif input_mode == "Upload Video" and uploaded_file:
                 update_side_panels()
                 
                 if current_fc % st.session_state["skip_frame"] == 0 or st.session_state["cached_img_cv"] is None:
-                    # IMPLEMENTASI ADAPTIF: Mengirimkan parameter tema aktif saat membuat grafik video
                     img_cv, img_uni = get_baked_chart_image(st.session_state["cv_trend"], app_theme, width_px=chart_w, height_px=chart_h)
                     st.session_state["cached_img_cv"] = img_cv
                     st.session_state["cached_img_uni"] = img_uni
