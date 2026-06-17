@@ -1,7 +1,7 @@
 """
 ============================================================
 SLV - SmartLivestock Vision
-MAIN APP: dashboard.py (SPOTIFY EDITION - BUG FIX DICTIONARY GET)
+MAIN APP: dashboard.py (SPOTIFY EDITION - MOBILE VIDEO & CODEC OPTIMIZED)
 ============================================================
 Jalankan dengan:  streamlit run src/dashboard.py
 ============================================================
@@ -229,18 +229,7 @@ with st.sidebar:
     st.divider()
     input_mode = st.radio("Mode Input", ["Kamera Live", "Upload Video", "Upload Foto"])
 
-    uploaded_file = None
-    btn_detect_photo = False
-    
-    if input_mode == "Upload Video":
-        uploaded_file = st.file_uploader("Upload Video (.mp4, 'avi')", type=["mp4", "avi", "mov"])
-    elif input_mode == "Upload Foto":
-        uploaded_file = st.file_uploader("Upload Foto (.jpg, 'png')", type=["jpg", "jpeg", "png"])
-        if uploaded_file is not None:
-            btn_detect_photo = st.button("Mulai Deteksi Foto", type="primary", use_container_width=True)
-
     st.divider()
-    
     st.markdown("### Kalibrasi Aktif")
     cfg = load_config()
     
@@ -277,6 +266,22 @@ with st.sidebar:
         st.rerun()
 
 # ── LAYOUT UTAMA ──────────────────────────────────────────
+uploaded_file = None
+btn_detect_photo = False
+btn_detect_video = False  # Pemicu mandiri anti-freeze mobile
+
+if input_mode == "Upload Foto":
+    st.markdown("#### 📁 Unggah Foto Maket Sapi")
+    uploaded_file = st.file_uploader("Pilih file gambar (.jpg, .png)", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
+    if uploaded_file is not None:
+        btn_detect_photo = st.button("⚡ MULAI DETEKSI FOTO", type="primary", use_container_width=True)
+
+elif input_mode == "Upload Video":
+    st.markdown("#### 📁 Unggah Rekaman Video Kandang")
+    uploaded_file = st.file_uploader("Pilih file video (.mp4, .avi, .mov)", type=["mp4", "avi", "mov"], label_visibility="collapsed")
+    if uploaded_file is not None:
+        btn_detect_video = st.button("⚡ MULAI DETEKSI VIDEO", type="primary", use_container_width=True)
+
 st.markdown("#### Live Feed Kamera AI")
 video_placeholder = st.empty()
 box_status_placeholder = st.empty()
@@ -312,7 +317,6 @@ def get_baked_chart_image(cv_trend, width_px=300, height_px=110):
     dpi = 100
     figsize_inch = (width_px / dpi, height_px / dpi)
     
-    # 1. Render Grafik Tren CV (%)
     fig_cv, ax_cv = plt.subplots(figsize=figsize_inch, dpi=dpi, facecolor='#181818')
     ax_cv.set_facecolor('#181818')
     ax_cv.plot(df["CV"], color='#ffbb33', linewidth=2.5)
@@ -328,7 +332,6 @@ def get_baked_chart_image(cv_trend, width_px=300, height_px=110):
     img_cv = cv2.resize(img_cv, (width_px, height_px))
     plt.close(fig_cv)
     
-    # 2. Render Grafik Indeks Keseragaman (%)
     fig_uni, ax_uni = plt.subplots(figsize=figsize_inch, dpi=dpi, facecolor='#181818')
     ax_uni.set_facecolor('#181818')
     ax_uni.plot(df["Uniformity"], color='#1DB954', linewidth=2.5)
@@ -477,94 +480,97 @@ if input_mode == "Upload Foto" and uploaded_file:
     update_side_panels()
 
 elif input_mode == "Upload Video" and uploaded_file:
-    if st.session_state["detector"] is None: st.session_state["detector"] = LivestockDetector()
+    if st.session_state["detector"] is None: 
+        st.session_state["detector"] = LivestockDetector()
     
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tfile:
-        tfile.write(uploaded_file.read())
-        tfile_path = tfile.name
-
-    cap = cv2.VideoCapture(tfile_path)
-    
-    orig_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    orig_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    orig_fps = cap.get(cv2.CAP_PROP_FPS) if cap.get(cv2.CAP_PROP_FPS) > 0 else 20.0
-    
-    out_dir = tempfile.gettempdir()
-    out_video_path = os.path.join(out_dir, f"slv_output_{int(time.time())}.mp4")
-    
-    import imageio
-    try:
-        out_writer = imageio.get_writer(out_video_path, fps=orig_fps, codec='libx264', quality=7)
-        use_imageio = True
-    except Exception:
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out_writer = cv2.VideoWriter(out_video_path, fourcc, orig_fps, (orig_w, orig_h))
-        use_imageio = False
-    
-    progress_bar = st.empty()
-    progress_bar.info("AI sedang melakukan tracking objek dan menjahit grafik ke dalam file video. Silakan tunggu...")
-    
-    chart_w, chart_h = int(orig_w * 0.28), int(orig_h * 0.18) 
-    
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret: break
-        
-        current_fc = st.session_state["frame_count"]
-        annotated_frame = process_frame(frame)
-        update_side_panels()
-        
-        if current_fc % st.session_state["skip_frame"] == 0 or st.session_state["cached_img_cv"] is None:
-            img_cv, img_uni = get_baked_chart_image(st.session_state["cv_trend"], width_px=chart_w, height_px=chart_h)
-            st.session_state["cached_img_cv"] = img_cv
-            st.session_state["cached_img_uni"] = img_uni
-        
-        img_cv = st.session_state["cached_img_cv"]
-        img_uni = st.session_state["cached_img_uni"]
-        
-        if img_cv is not None and img_uni is not None:
-            margin = 15
-            y_offset = orig_h - chart_h - margin
-            
-            x_offset_cv = margin
-            annotated_frame[y_offset:y_offset+chart_h, x_offset_cv:x_offset_cv+chart_w] = img_cv
-            
-            x_offset_uni = orig_w - chart_w - margin
-            annotated_frame[y_offset:y_offset+chart_h, x_offset_uni:x_offset_uni+chart_w] = img_uni
-            
-        if use_imageio:
-            frame_rgb = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
-            out_writer.append_data(frame_rgb)
-        else:
-            out_writer.write(annotated_frame)
-        
-        with video_placeholder: 
-            st.image(cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB), width="stretch")
-            
-    cap.release()
-    if use_imageio:
-        out_writer.close()
+    # Menampilkan panduan sebelum tombol eksekusi ditekan
+    if not btn_detect_video:
+        st.info("💡 Video sukses terunggah! Silakan klik tombol **⚡ MULAI DETEKSI VIDEO** di atas untuk menjalankan tracking AI.")
     else:
-        out_writer.release()
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tfile:
+            tfile.write(uploaded_file.read())
+            tfile_path = tfile.name
+
+        cap = cv2.VideoCapture(tfile_path)
         
-    progress_bar.empty()
-    
-    st.success("Proses rendering video selesai!")
-    if os.path.exists(out_video_path):
-        with open(out_video_path, "rb") as vid_file:
-            st.download_button(
-                label="Download Hasil Video AI",
-                data=vid_file,
-                file_name=f"SLV_Analisis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4",
-                mime="video/mp4",
-                use_container_width=True,
-                key=f"instant_dl_v_btn_{int(time.time())}"
-            )
+        # FIX PROTEKSI KODEKS: Pengecekan apakah video HP (H.265) bisa dibaca server cloud Linux
+        if not cap.isOpened():
+            st.error("⚠️ **Gagal Membaca Video HP (Masalah Kodeks)!** Video hasil rekaman langsung kamera HP lo otomatis menggunakan kompresi tingkat tinggi (**H.265/HEVC**). Server cloud Streamlit Linux gratisan tidak memiliki codec untuk membaca format ini. \n\n**Solusi Mudah Sidang:** \n1. Gunakan file video sampel standar **MP4 (H.264)** yang biasa lo putar lancar di laptop. \n2. Atau konversi dulu video HP lo lewat website converter online ke MP4 standar biasa sebelum di-upload.")
+        else:
+            orig_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            orig_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            orig_fps = cap.get(cv2.CAP_PROP_FPS) if cap.get(cv2.CAP_PROP_FPS) > 0 else 20.0
             
-    try:
-        os.unlink(tfile_path)
-    except Exception:
-        pass
+            out_dir = tempfile.gettempdir()
+            out_video_path = os.path.join(out_dir, f"slv_output_{int(time.time())}.mp4")
+            
+            import imageio
+            try:
+                out_writer = imageio.get_writer(out_video_path, fps=orig_fps, codec='libx264', quality=7)
+                use_imageio = True
+            except Exception:
+                fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                out_writer = cv2.VideoWriter(out_video_path, fourcc, orig_fps, (orig_w, orig_h))
+                use_imageio = False
+            
+            progress_bar = st.empty()
+            progress_bar.info("AI sedang melacak objek dan menjahit grafik ke video. Silakan tunggu...")
+            
+            chart_w, chart_h = int(orig_w * 0.28), int(orig_h * 0.18) 
+            
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret: break
+                
+                current_fc = st.session_state["frame_count"]
+                annotated_frame = process_frame(frame)
+                update_side_panels()
+                
+                if current_fc % st.session_state["skip_frame"] == 0 or st.session_state["cached_img_cv"] is None:
+                    img_cv, img_uni = get_baked_chart_image(st.session_state["cv_trend"], width_px=chart_w, height_px=chart_h)
+                    st.session_state["cached_img_cv"] = img_cv
+                    st.session_state["cached_img_uni"] = img_uni
+                
+                img_cv = st.session_state["cached_img_cv"]
+                img_uni = st.session_state["cached_img_uni"]
+                
+                if img_cv is not None and img_uni is not None:
+                    margin = 15
+                    y_offset = orig_h - chart_h - margin
+                    x_offset_cv = margin
+                    annotated_frame[y_offset:y_offset+chart_h, x_offset_cv:x_offset_cv+chart_w] = img_cv
+                    x_offset_uni = orig_w - chart_w - margin
+                    annotated_frame[y_offset:y_offset+chart_h, x_offset_uni:x_offset_uni+chart_w] = img_uni
+                    
+                if use_imageio:
+                    frame_rgb = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+                    out_writer.append_data(frame_rgb)
+                else:
+                    out_writer.write(annotated_frame)
+                
+                with video_placeholder: 
+                    st.image(cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB), width="stretch")
+                    
+            cap.release()
+            if use_imageio: out_writer.close()
+            else: out_writer.release()
+                
+            progress_bar.empty()
+            st.success("Proses rendering video selesai!")
+            
+            if os.path.exists(out_video_path):
+                with open(out_video_path, "rb") as vid_file:
+                    st.download_button(
+                        label="Download Hasil Video AI",
+                        data=vid_file,
+                        file_name=f"SLV_Analisis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4",
+                        mime="video/mp4",
+                        use_container_width=True,
+                        key=f"instant_dl_v_btn_{int(time.time())}"
+                    )
+                    
+            try: os.unlink(tfile_path)
+            except Exception: pass
 
 elif input_mode == "Kamera Live":
     if st.session_state["camera_active"]:
@@ -583,7 +589,6 @@ elif input_mode == "Kamera Live":
 
             while st.session_state["camera_active"] and not stop_cam:
                 t0 = time.time()
-                
                 ret, frame = cap.read()
                 if not ret: break
 
@@ -593,7 +598,6 @@ elif input_mode == "Kamera Live":
                 update_side_panels()
                 fps = 1 / (time.time() - t0 + 1e-9)
                 fps_display.markdown(f"<p style='color:#1DB954; font-size:0.8rem; font-weight:600;'>FPS: {fps:.1f}</p>", unsafe_allow_html=True)
-                
                 time.sleep(0.001)
                 
             cap.release()
