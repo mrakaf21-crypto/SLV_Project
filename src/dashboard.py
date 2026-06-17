@@ -271,16 +271,16 @@ btn_detect_photo = False
 btn_detect_video = False
 
 if input_mode == "Upload Foto":
-    st.markdown("#### 📁 Unggah Foto Maket Sapi")
+    st.markdown("#### 📁 Unggah Foto Sapi")
     uploaded_file = st.file_uploader("Pilih file gambar (.jpg, .png)", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
     if uploaded_file is not None:
-        btn_detect_photo = st.button("⚡ MULAI DETEKSI FOTO", type="primary", use_container_width=True)
+        btn_detect_photo = st.button("Mulai Deteksi Sapi", type="primary", use_container_width=True)
 
 elif input_mode == "Upload Video":
-    st.markdown("#### 📁 Unggah Rekaman Video Kandang")
+    st.markdown("#### 📁 Unggah Rekaman Video Sapi")
     uploaded_file = st.file_uploader("Pilih file video (.mp4, .avi, .mov)", type=["mp4", "avi", "mov"], label_visibility="collapsed")
     if uploaded_file is not None:
-        btn_detect_video = st.button("⚡ MULAI DETEKSI VIDEO", type="primary", use_container_width=True)
+        btn_detect_video = st.button("Mulai Deteksi Video", type="primary", use_container_width=True)
 
 st.markdown("#### Live Feed Kamera AI")
 video_placeholder = st.empty()
