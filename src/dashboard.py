@@ -271,7 +271,7 @@ btn_detect_photo = False
 btn_detect_video = False  # Pemicu mandiri anti-freeze mobile
 
 if input_mode == "Upload Foto":
-    st.markdown("#### 📁 Unggah Foto Maket Sapi")
+    st.markdown("#### 📁 Unggah Foto Sapi")
     uploaded_file = st.file_uploader("Pilih file gambar (.jpg, .png)", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
     if uploaded_file is not None:
         btn_detect_photo = st.button("Mulai Deteksi Foto", type="primary", use_container_width=True)
